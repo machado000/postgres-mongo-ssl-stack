@@ -15,9 +15,9 @@ source .env
 set +a
 
 # === SYSTEM SETUP ===
-# apt update && apt upgrade -y
-# apt install -y docker.io ufw nginx python3-certbot-nginx unzip curl
-# systemctl enable docker
+apt update && apt upgrade -y
+apt install -y docker.io ufw nginx python3-certbot-nginx unzip curl
+systemctl enable docker
 timedatectl set-timezone America/Sao_Paulo
 
 # === FIREWALL ===
