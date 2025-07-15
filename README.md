@@ -1,6 +1,7 @@
 # Dockerized PostgreSQL + MongoDB Stack with SSL and PgAdmin Proxy
 
-This repository contains a Bash script that automates the setup of a secure PostgreSQL and MongoDB stack using Docker Compose. It configures SSL certificates with Let's Encrypt, a firewall, and an NGINX reverse proxy with SSL termination and PgAdmin4.
+Bash script that automates the setup of a secure PostgreSQL and MongoDB stack using Docker Compose.
+It configures SSL certificates with Let's Encrypt, a UFW firewall, and an NGINX reverse proxy with SSL termination and PgAdmin4.
 
 ## Features
 
