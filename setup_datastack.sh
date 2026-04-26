@@ -6,6 +6,15 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+# must be root
+if [ "$(id -u)" -ne 0 ]; then
+  echo "❌ Please run this script as root or with sudo."
+  exit 1
+fi
+
+# avoid interactive prompts during apt operations
+export DEBIAN_FRONTEND=noninteractive
+
 # === LOAD ENV Variables===
 # DOMAIN, EMAIL,
 # PG_ADMIN_EMAIL, PG_ADMIN_PASSWORD, PG_DB_USER, PG_DB_PASSWORD, PG_DB_NAME
@@ -14,11 +23,29 @@ set -a
 source .env
 set +a
 
+# require EMAIL in .env for certbot
+if [ -z "${EMAIL:-}" ]; then
+  echo "❌ EMAIL not set in .env (required for certbot)"
+  exit 1
+fi
+
 # === SYSTEM SETUP ===
 apt update && apt upgrade -y
-apt install -y docker.io ufw nginx python3-certbot-nginx unzip curl
-systemctl enable docker
+# install docker + compose plugin (Debian's docker.io may be present)
+apt install -y docker.io docker-compose-plugin ufw nginx python3-certbot-nginx unzip curl
+# enable and start docker immediately so subsequent docker commands work
+systemctl enable --now docker
 timedatectl set-timezone America/Sao_Paulo
+
+# verify docker and compose are available
+if ! command -v docker >/dev/null 2>&1; then
+  echo "❌ docker command not found after installation"
+  exit 1
+fi
+if ! docker compose version >/dev/null 2>&1; then
+  echo "❌ docker compose is not available. Please install docker-compose-plugin or the docker-compose binary."
+  exit 1
+fi
 
 # === FIREWALL ===
 ufw allow OpenSSH
@@ -122,11 +149,7 @@ services:
       - ./webroot:/var/www/html:ro
     depends_on:
       - pgadmin
-    healthcheck:
-      test: curl -f http://pgadmin:80/ || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 3
+    # note: avoid in-container healthchecks that depend on tools not present in nginx image
 
 volumes:
   pgdata:
@@ -204,12 +227,18 @@ cat ./letsencrypt/live/${DOMAIN}/fullchain.pem \
     > ./conf/mongodb.pem
 
 # Fix permissions for postgres and mongo to read cert files
-chown 999:999 ./letsencrypt/live/${DOMAIN}/privkey.pem
-chmod 600 ./letsencrypt/live/${DOMAIN}/privkey.pem
-chown 999:999 ./letsencrypt/live/${DOMAIN}/chain.pem
-chmod 600 ./letsencrypt/live/${DOMAIN}/chain.pem
-chown 999:999 ./conf/mongodb.pem
-chmod 600 ./conf/mongodb.pem
+for f in ./letsencrypt/live/${DOMAIN}/privkey.pem ./letsencrypt/live/${DOMAIN}/chain.pem ./conf/mongodb.pem; do
+  if [ -e "$f" ]; then
+    if getent passwd 999 >/dev/null 2>&1; then
+      chown 999:999 "$f" || true
+    else
+      echo "⚠️ UID 999 not present; leaving owner as-is for $f"
+    fi
+    chmod 600 "$f" || true
+  else
+    echo "⚠️ File not found: $f"
+  fi
+done
 
 # === UPDATE NGINX TO USE SSL ===
 cat <<EOF > conf/nginx.conf
