@@ -31,8 +31,48 @@ fi
 
 # === SYSTEM SETUP ===
 apt update && apt upgrade -y
-# install docker + compose plugin (Debian's docker.io may be present)
-apt install -y docker.io docker-compose-plugin ufw nginx python3-certbot-nginx unzip curl
+# install docker (Debian package) and other dependencies
+apt install -y docker.io ufw nginx python3-certbot-nginx unzip curl
+# try installing docker compose plugin via apt; if unavailable, download the Compose CLI plugin binary
+if ! apt install -y docker-compose-plugin; then
+  echo "⚠️ docker-compose-plugin not available via apt — installing Compose CLI plugin binary"
+  mkdir -p /usr/local/lib/docker/cli-plugins
+  ARCH=$(dpkg --print-architecture)
+  case "$ARCH" in
+    amd64) ARCH_NAME="x86_64";;
+    arm64) ARCH_NAME="aarch64";;
+    *) ARCH_NAME="$ARCH";;
+  esac
+  LATEST_URL=$(curl -sL https://api.github.com/repos/docker/compose/releases/latest | grep browser_download_url | grep "linux-$ARCH_NAME" | head -n1 | cut -d '"' -f4)
+  if [ -z "$LATEST_URL" ]; then
+    echo "❌ Could not determine latest docker/compose release automatically."
+  else
+    curl -sSL "$LATEST_URL" -o /usr/local/lib/docker/cli-plugins/docker-compose
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+  fi
+fi
+# enable and start docker immediately so subsequent docker commands work
+systemctl enable --now docker
+timedatectl set-timezone America/Sao_Paulo
+
+# === SYSTEM SETUP ===
+apt update && apt upgrade -y
+
+# Install prerequisites for Docker's APT repository
+apt install -y ca-certificates curl gnupg lsb-release ufw nginx python3-certbot-nginx unzip
+
+# Add Docker's official GPG key and APT repository
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod 644 /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt update
+
+# Install Docker Engine and Compose plugin from Docker's official repo
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
 # enable and start docker immediately so subsequent docker commands work
 systemctl enable --now docker
 timedatectl set-timezone America/Sao_Paulo
