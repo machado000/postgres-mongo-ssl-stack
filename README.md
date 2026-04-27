@@ -1,7 +1,7 @@
 # Dockerized PostgreSQL + MongoDB Stack with SSL and PgAdmin Proxy
 
-Bash script that automates the setup of a secure PostgreSQL and MongoDB stack using Docker Compose.
-It configures SSL certificates with Let's Encrypt, a UFW firewall, and an NGINX reverse proxy with SSL termination and PgAdmin4.
+Step-based Bash scripts to deploy a secure PostgreSQL + MongoDB stack with Docker Compose.
+The stack uses Let's Encrypt certificates, UFW firewall rules, and NGINX SSL termination with pgAdmin4 behind `/pgadmin`.
 
 ## Features
 
@@ -40,18 +40,46 @@ MONGO_INITDB_ROOT_PASSWORD=strongpassword
 git clone https://github.com/yourname/yourrepo.git
 cd yourrepo
 ```
-2. Create and edit `.env` with your values.
-3. Run the script:
+2. Create and edit `.env` with your values (you can copy from `.env.example`).
+3. Deploy using the step runner:
 ```bash
-sudo bash setup_datastack.sh
+sudo bash deploy_datastack.sh
 ```
-4. Access PgAdmin at: `https://your.domain.com/pgadmin`
+4. Access pgAdmin at `https://your.domain.com/pgadmin`
+
+## Step Scripts
+
+You can run each step independently for easier troubleshooting:
+
+```bash
+sudo bash steps/01-system.sh
+sudo bash steps/02-docker.sh
+sudo bash steps/03-compose.sh
+sudo bash steps/04-certbot.sh
+sudo bash steps/05-deploy.sh
+```
+
+## Undeploy
+
+Use the undeploy script to remove the stack safely:
+
+```bash
+sudo bash undeploy_datastack.sh
+```
+
+Non-interactive mode:
+
+```bash
+sudo bash undeploy_datastack.sh
+```
 
 ## Notes
-- The script enables UFW firewall with default rules for SSH, HTTP, HTTPS, PostgreSQL (5432), and MongoDB (27017).
-- Certificates are obtained using Certbot with webroot validation.
-- NGINX proxies PgAdmin with proper header forwarding and SSL.
-- Adjust resource limits in conf/postgresql.conf as needed.
+- UFW rules are applied for SSH, HTTP, HTTPS, PostgreSQL (5432), and MongoDB (27017).
+- Certificates are obtained using Certbot webroot validation.
+- `steps/04-certbot.sh` can reuse existing valid Let's Encrypt certificates for the configured domain.
+- NGINX proxies pgAdmin with forwarded headers and cookie path rewrite for `/pgadmin`.
+- If pgAdmin login fails after proxy/path changes, clear browser cookies for the domain.
+- Adjust resource limits in `conf/postgresql.conf` as needed.
 
 ## License
 MIT License
