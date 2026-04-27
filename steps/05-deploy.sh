@@ -227,5 +227,13 @@ echo "Bringing down any existing compose stack and starting full stack"
 docker compose down || true
 docker compose up -d
 
+echo ""
+echo "pgAdmin server registration hint:"
+echo "  Host name/address: pg_db"
+echo "  Port: 5432"
+echo "  Maintenance DB: ${PG_DB_NAME}"
+echo "  Username: ${PG_DB_USER}"
+echo "  Password: (value from PG_DB_PASSWORD in .env)"
+
 echo "Deployment requested. Check running containers with: docker ps --filter name=pg_db --filter name=mongo_db --filter name=nginx_proxy --filter name=pgadmin"
 echo "Done."

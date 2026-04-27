@@ -70,7 +70,7 @@ sudo bash undeploy_datastack.sh
 Non-interactive mode:
 
 ```bash
-sudo bash undeploy_datastack.sh --yes
+sudo bash undeploy_datastack.sh
 ```
 
 ## Notes
