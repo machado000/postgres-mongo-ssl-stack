@@ -81,5 +81,10 @@ sudo bash undeploy_datastack.sh
 - If pgAdmin login fails after proxy/path changes, clear browser cookies for the domain.
 - Adjust resource limits in `conf/postgresql.conf` as needed.
 
+## Troubleshooting
+- External client error "FATAL: invalid value for parameter TimeZone: Brazil/East" comes from the client session setting, not this stack.
+- In DBeaver, edit the PostgreSQL connection and set the connection timezone to a valid IANA zone such as America/Sao_Paulo (or UTC).
+- If needed, remove any custom driver property named TimeZone/PGTZ that is set to Brazil/East, then reconnect.
+
 ## License
 MIT License

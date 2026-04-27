@@ -39,4 +39,5 @@ Thumbs.db
 # User-specific files #
 #####################
 /letsencrypt
+/.vscode
 *.env

@@ -81,7 +81,7 @@ echo "Writing docker-compose.yml (full stack)"
 cat > docker-compose.yml <<EOF
 services:
   pg_db:
-    image: postgres:16
+    image: postgres:18
     container_name: pg_db
     restart: always
     environment:
@@ -93,7 +93,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./conf/postgresql.conf:/etc/postgresql/postgresql.conf
       - ./conf/pg_hba.conf:/etc/postgresql/pg_hba.conf
       - ./letsencrypt/live/${DOMAIN}/fullchain.pem:/etc/ssl/certs/server.crt:ro
